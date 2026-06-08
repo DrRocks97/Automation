@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>儿童生长发育与生命体征评估工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .calculator {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .gender-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .gender-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .gender-btn:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .gender-btn.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-calculate {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 10px;
+        }
+
+        .btn-calculate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-calculate:active {
+            transform: translateY(0);
+        }
+
+        .results {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-section {
+            background: #f8f9ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .result-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .result-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .result-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .result-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .result-unit {
+            font-size: 0.9rem;
+            color: #999;
+            margin-left: 2px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .status-normal {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-alert {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .interpretation {
+            background: #e7f3ff;
+            border-left: 4px solid #667eea;
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin-top: 15px;
+        }
+
+        .interpretation-title {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .interpretation-text {
+            color: #555;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .age-display {
+            background: #f0f0f0;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #666;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.3s ease;
+        }
+
+        .tab:hover {
+            background: #f0f0f0;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .vital-signs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .vital-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-left: 4px solid #667eea;
+        }
+
+        .vital-card.high {
+            border-left-color: #dc3545;
+        }
+
+        .vital-card.low {
+            border-left-color: #ffc107;
+        }
+
+        .vital-card.normal {
+            border-left-color: #28a745;
+        }
+
+        .vital-title {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .vital-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .vital-ref {
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        .vital-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .module-separator {
+            height: 2px;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            margin: 30px 0;
+            border-radius: 2px;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .calculator {
+                padding: 20px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👶 儿童生长发育与生命体征评估工具</h1>
+            <p>基于首都儿科研究所标准 (0-18 岁) | 中国儿童生命体征参考值</p>
+        </div>
+
+        <div class="calculator">
+            <!-- 基本信息 -->
+            <div class="section-title">📋 基本信息</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>性别</label>
+                    <div class="gender-buttons">
+                        <button type="button" class="gender-btn active" data-gender="boy" onclick="setGender('boy')">男孩</button>
+                        <button type="button" class="gender-btn" data-gender="girl" onclick="setGender('girl')">女孩</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>年龄</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="number" id="ageYears" placeholder="岁" min="0" max="18" value="0" onchange="updateAgeDisplay()">
+                        <input type="number" id="ageMonths" placeholder="月" min="0" max="11" value="0" onchange="updateAgeDisplay()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 生长发育指标 -->
+            <div class="section-title">📏 生长发育指标</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>身高 (cm)</label>
+                    <input type="number" id="height" placeholder="请输入身高" min="30" max="200" step="0.1">
+                </div>
+
+                <div class="form-group">
+                    <label>体重 (kg)</label>
+                    <input type="number" id="weight" placeholder="请输入体重" min="1" max="100" step="0.01">
+                </div>
+            </div>
+
+            <!-- 生命体征指标 -->
+            <div class="section-title">💓 生命体征指标</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>心率 (次/分)</label>
+                    <input type="number" id="heartRate" placeholder="安静状态" min="40" max="220">
+                </div>
+
+                <div class="form-group">
+                    <label>呼吸频率 (次/分)</label>
+                    <input type="number" id="respRate" placeholder="安静状态" min="10" max="70">
+                </div>
+
+                <div class="form-group">
+                    <label>收缩压 (mmHg)</label>
+                    <input type="number" id="sysBp" placeholder="高压" min="50" max="180">
+                </div>
+
+                <div class="form-group">
+                    <label>舒张压 (mmHg)</label>
+                    <input type="number" id="diaBp" placeholder="低压" min="30" max="120">
+                </div>
+            </div>
+
+            <button class="btn-calculate" onclick="calculate()">开始综合评估</button>
+
+            <div class="results" id="results">
+                <div class="age-display" id="ageDisplay"></div>
+
+                <!-- 生长发育评估 -->
+                <div class="section-title">📊 生长发育评估</div>
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('weightAge')">体重/年龄</button>
+                    <button class="tab" onclick="switchTab('heightAge')">身高/年龄</button>
+                    <button class="tab" onclick="switchTab('weightHeight')">体重/身高</button>
+                </div>
+
+                <div id="weightAge" class="tab-content active"></div>
+                <div id="heightAge" class="tab-content"></div>
+                <div id="weightHeight" class="tab-content"></div>
+
+                <div class="module-separator"></div>
+
+                <!-- 生命体征评估 -->
+                <div class="section-title">💓 生命体征评估</div>
+                <div class="vital-signs-grid" id="vitalSignsResults"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentGender = 'boy';
+
+        // 中国儿童生长标准数据 (首都儿科研究所，简化版示例)
+        const chineseStandards = {
+            boy: {
+                weightForAge: {
+                    0: { P3: 2.5, P15: 3.0, P50: 3.3, P85: 3.8, P97: 4.4 },
+                    0.5: { P3: 5.0, P15: 6.0, P50: 7.0, P85: 8.2, P97: 9.5 },
+                    1: { P3: 6.8, P15: 7.8, P50: 9.0, P85: 10.5, P97: 12.0 },
+                    2: { P3: 9.5, P15: 10.8, P50: 12.5, P85: 14.5, P97: 16.5 },
+                    3: { P3: 11.5, P15: 13.0, P50: 14.8, P85: 17.2, P97: 19.5 },
+                    4: { P3: 13.0, P15: 14.8, P50: 16.8, P85: 19.5, P97: 22.0 },
+                    5: { P3: 14.5, P15: 16.5, P50: 18.8, P85: 21.8, P97: 24.5 },
+                    6: { P3: 16.0, P15: 18.2, P50: 20.8, P85: 24.2, P97: 27.5 },
+                    8: { P3: 19.0, P15: 21.8, P50: 25.5, P85: 30.0, P97: 34.5 },
+                    10: { P3: 23.0, P15: 26.5, P50: 31.5, P85: 37.5, P97: 43.5 },
+                    12: { P3: 28.0, P15: 32.5, P50: 39.0, P85: 46.5, P97: 54.5 },
+                    14: { P3: 35.0, P15: 41.0, P50: 49.5, P85: 59.0, P97: 68.5 },
+                    16: { P3: 43.0, P15: 50.0, P50: 59.0, P85: 69.0, P97: 78.5 },
+                    18: { P3: 48.0, P15: 55.0, P50: 63.0, P85: 72.0, P97: 80.0 }
+                },
+                heightForAge: {
+                    0: { P3: 46.5, P15: 48.0, P50: 50.0, P85: 52.0, P97: 54.0 },
+                    0.5: { P3: 62.0, P15: 64.5, P50: 67.0, P85: 69.5, P97: 72.0 },
+                    1: { P3: 71.0, P15: 73.5, P50: 76.0, P85: 78.5, P97: 81.0 },
+                    2: { P3: 81.0, P15: 84.0, P50: 87.0, P85: 90.0, P97: 93.0 },
+                    3: { P3: 88.0, P15: 91.0, P50: 95.0, P85: 99.0, P97: 103.0 },
+                    4: { P3: 94.0, P15: 98.0, P50: 102.5, P85: 107.0, P97: 111.5 },
+                    5: { P3: 100.0, P15: 104.5, P50: 109.5, P85: 114.5, P97: 119.5 },
+                    6: { P3: 106.0, P15: 111.0, P50: 116.5, P85: 122.0, P97: 127.5 },
+                    8: { P3: 116.0, P15: 121.5, P50: 128.0, P85: 134.5, P97: 141.0 },
+                    10: { P3: 126.0, P15: 132.0, P50: 139.5, P85: 147.0, P97: 154.5 },
+                    12: { P3: 137.0, P15: 144.0, P50: 152.5, P85: 161.0, P97: 169.5 },
+                    14: { P3: 150.0, P15: 158.0, P50: 167.0, P85: 175.5, P97: 183.5 },
+                    16: { P3: 158.0, P15: 165.0, P50: 172.0, P85: 178.5, P97: 184.5 },
+                    18: { P3: 160.0, P15: 167.0, P50: 173.0, P85: 179.0, P97: 184.0 }
+                },
+                weightForHeight: {
+                    70: { P3: 6.5, P15: 7.5, P50: 8.8, P85: 10.3, P97: 11.8 },
+                    80: { P3: 8.0, P15: 9.2, P50: 10.8, P85: 12.6, P97: 14.5 },
+                    90: { P3: 9.8, P15: 11.2, P50: 13.0, P85: 15.2, P97: 17.5 },
+                    100: { P3: 11.5, P15: 13.2, P50: 15.3, P85: 17.9, P97: 20.6 },
+                    110: { P3: 13.5, P15: 15.4, P50: 17.8, P85: 20.8, P97: 24.0 },
+                    120: { P3: 15.8, P15: 18.0, P50: 20.8, P85: 24.3, P97: 28.0 },
+                    130: { P3: 18.5, P15: 21.2, P50: 24.5, P85: 28.5, P97: 32.8 },
+                    140: { P3: 21.5, P15: 24.8, P50: 28.8, P85: 33.5, P97: 38.5 },
+                    150: { P3: 25.0, P15: 29.0, P50: 33.8, P85: 39.5, P97: 45.5 },
+                    160: { P3: 29.0, P15: 33.8, P50: 39.5, P85: 46.0, P97: 53.0 },
+                    170: { P3: 33.5, P15: 39.0, P50: 45.5, P85: 53.0, P97: 61.0 },
+                    180: { P3: 38.5, P15: 45.0, P50: 52.5, P85: 61.0, P97: 70.0 }
+                }
+            },
+            girl: {
+                weightForAge: {
+                    0: { P3: 2.4, P15: 2.9, P50: 3.2, P85: 3.7, P97: 4.2 },
+                    0.5: { P3: 4.8, P15: 5.8, P50: 6.7, P85: 7.8, P97: 9.0 },
+                    1: { P3: 6.5, P15: 7.5, P50: 8.5, P85: 9.8, P97: 11.2 },
+                    2: { P3: 9.0, P15: 10.2, P50: 11.8, P85: 13.6, P97: 15.5 },
+                    3: { P3: 11.0, P15: 12.4, P50: 14.2, P85: 16.4, P97: 18.6 },
+                    4: { P3: 12.5, P15: 14.2, P50: 16.2, P85: 18.7, P97: 21.2 },
+                    5: { P3: 14.0, P15: 15.9, P50: 18.1, P85: 20.9, P97: 23.7 },
+                    6: { P3: 15.5, P15: 17.6, P50: 20.1, P85: 23.3, P97: 26.5 },
+                    8: { P3: 18.5, P15: 21.2, P50: 24.5, P85: 28.5, P97: 32.8 },
+                    10: { P3: 22.5, P15: 25.8, P50: 30.0, P85: 35.5, P97: 41.5 },
+                    12: { P3: 28.0, P15: 32.5, P50: 38.5, P85: 45.5, P97: 53.0 },
+                    14: { P3: 35.5, P15: 41.0, P50: 47.5, P85: 54.5, P97: 61.5 },
+                    16: { P3: 41.0, P15: 46.5, P50: 52.0, P85: 58.0, P97: 64.0 },
+                    18: { P3: 43.0, P15: 48.0, P50: 53.0, P85: 58.5, P97: 64.0 }
+                },
+                heightForAge: {
+                    0: { P3: 45.5, P15: 47.0, P50: 49.0, P85: 51.0, P97: 53.0 },
+                    0.5: { P3: 60.5, P15: 63.0, P50: 65.5, P85: 68.0, P97: 70.5 },
+                    1: { P3: 69.5, P15: 72.0, P50: 74.5, P85: 77.0, P97: 79.5 },
+                    2: { P3: 80.0, P15: 83.0, P50: 86.0, P85: 89.0, P97: 92.0 },
+                    3: { P3: 87.0, P15: 90.0, P50: 94.0, P85: 98.0, P97: 102.0 },
+                    4: { P3: 93.5, P15: 97.5, P50: 101.5, P85: 106.0, P97: 110.5 },
+                    5: { P3: 99.5, P15: 104.0, P50: 108.5, P85: 113.5, P97: 118.5 },
+                    6: { P3: 105.5, P15: 110.5, P50: 115.5, P85: 121.0, P97: 126.5 },
+                    8: { P3: 115.5, P15: 121.0, P50: 127.5, P85: 134.0, P97: 140.5 },
+                    10: { P3: 126.0, P15: 132.0, P50: 139.0, P85: 146.5, P97: 154.0 },
+                    12: { P3: 138.0, P15: 145.0, P50: 152.5, P85: 160.0, P97: 167.0 },
+                    14: { P3: 148.0, P15: 154.0, P50: 160.0, P85: 165.5, P97: 170.5 },
+                    16: { P3: 151.0, P15: 156.5, P50: 161.5, P85: 166.5, P97: 171.0 },
+                    18: { P3: 152.0, P15: 157.5, P50: 162.0, P85: 166.5, P97: 170.5 }
+                },
+                weightForHeight: {
+                    70: { P3: 6.2, P15: 7.2, P50: 8.4, P85: 9.8, P97: 11.2 },
+                    80: { P3: 7.7, P15: 8.8, P50: 10.3, P85: 12.0, P97: 13.8 },
+                    90: { P3: 9.4, P15: 10.7, P50: 12.5, P85: 14.5, P97: 16.7 },
+                    100: { P3: 11.2, P15: 12.8, P50: 14.8, P85: 17.2, P97: 19.8 },
+                    110: { P3: 13.2, P15: 15.0, P50: 17.4, P85: 20.2, P97: 23.2 },
+                    120: { P3: 15.5, P15: 17.6, P50: 20.3, P85: 23.6, P97: 27.2 },
+                    130: { P3: 18.2, P15: 20.7, P50: 23.9, P85: 27.7, P97: 31.8 },
+                    140: { P3: 21.2, P15: 24.3, P50: 28.1, P85: 32.6, P97: 37.5 },
+                    150: { P3: 24.5, P15: 28.2, P50: 32.7, P85: 38.0, P97: 43.6 },
+                    160: { P3: 28.0, P15: 32.3, P50: 37.5, P85: 43.5, P97: 50.0 },
+                    170: { P3: 31.5, P15: 36.5, P50: 42.3, P85: 49.0, P97: 56.2 }
+                }
+            }
+        };
+
+        // 生命体征参考值
+        const vitalSignsStandards = {
+            heartRate: [
+                { ageMin: 0, ageMax: 0.083, label: "新生儿", min: 100, max: 205 },
+                { ageMin: 0.083, ageMax: 0.5, label: "1-6 月", min: 100, max: 180 },
+                { ageMin: 0.5, ageMax: 1, label: "6-12 月", min: 90, max: 160 },
+                { ageMin: 1, ageMax: 3, label: "1-3 岁", min: 80, max: 140 },
+                { ageMin: 3, ageMax: 5, label: "3-5 岁", min: 75, max: 130 },
+                { ageMin: 5, ageMax: 8, label: "5-8 岁", min: 70, max: 120 },
+                { ageMin: 8, ageMax: 12, label: "8-12 岁", min: 65, max: 110 },
+                { ageMin: 12, ageMax: 18, label: "12-18 岁", min: 60, max: 100 }
+            ],
+            respRate: [
+                { ageMin: 0, ageMax: 0.083, label: "新生儿", min: 40, max: 60 },
+                { ageMin: 0.083, ageMax: 0.5, label: "1-6 月", min: 30, max: 50 },
+                { ageMin: 0.5, ageMax: 1, label: "6-12 月", min: 25, max: 40 },
+                { ageMin: 1, ageMax: 3, label: "1-3 岁", min: 25, max: 35 },
+                { ageMin: 3, ageMax: 5, label: "3-5 岁", min: 20, max: 30 },
+                { ageMin: 5, ageMax: 8, label: "5-8 岁", min: 18, max: 25 },
+                { ageMin: 8, ageMax: 12, label: "8-12 岁", min: 15, max: 22 },
+                { ageMin: 12, ageMax: 18, label: "12-18 岁", min: 12, max: 20 }
+            ],
+            bpMale: [
+                { ageMin: 0, ageMax: 0.083, sysMax: 80, diaMax: 50 },
+                { ageMin: 0.083, ageMax: 0.5, sysMax: 90, diaMax: 60 },
+                { ageMin: 0.5, ageMax: 1, sysMax: 100, diaMax: 65 },
+                { ageMin: 1, ageMax: 3, sysMax: 105, diaMax: 70 },
+                { ageMin: 3, ageMax: 6, sysMax: 110, diaMax: 75 },
+                { ageMin: 6, ageMax: 10, sysMax: 120, diaMax: 80 },
+                { ageMin: 10, ageMax: 14, sysMax: 130, diaMax: 85 },
+                { ageMin: 14, ageMax: 18, sysMax: 140, diaMax: 90 }
+            ],
+            bpFemale: [
+                { ageMin: 0, ageMax: 0.083, sysMax: 78, diaMax: 48 },
+                { ageMin: 0.083, ageMax: 0.5, sysMax: 88, diaMax: 58 },
+                { ageMin: 0.5, ageMax: 1, sysMax: 98, diaMax: 64 },
+                { ageMin: 1, ageMax: 3, sysMax: 103, diaMax: 68 },
+                { ageMin: 3, ageMax: 6, sysMax: 108, diaMax: 73 },
+                { ageMin: 6, ageMax: 10, sysMax: 118, diaMax: 78 },
+                { ageMin: 10, ageMax: 14, sysMax: 128, diaMax: 83 },
+                { ageMin: 14, ageMax: 18, sysMax: 135, diaMax: 88 }
+            ]
+        };
+
+        function setGender(gender) {
+            currentGender = gender;
+            document.querySelectorAll('.gender-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.gender === gender);
+            });
+        }
+
+        function updateAgeDisplay() {
+            const years = parseFloat(document.getElementById('ageYears').value) || 0;
+            const months = parseFloat(document.getElementById('ageMonths').value) || 0;
+            const totalMonths = years * 12 + months;
+            
+            let ageText = '';
+            if (years > 0) ageText += `${years}岁`;
+            if (months > 0) ageText += `${months}月`;
+            if (ageText === '') ageText = '0 月';
+            
+            document.getElementById('ageDisplay').textContent = `当前评估年龄：${ageText} (${totalMonths}个月)`;
+        }
+
+        function interpolate(data, age) {
+            const ages = Object.keys(data).map(Number).sort((a, b) => a - b);
+            
+            if (age <= ages[0]) return data[ages[0]];
+            if (age >= ages[ages.length - 1]) return data[ages[ages.length - 1]];
+            
+            for (let i = 0; i < ages.length - 1; i++) {
+                if (age >= ages[i] && age <= ages[i + 1]) {
+                    const ratio = (age - ages[i]) / (ages[i + 1] - ages[i]);
+                    const result = {};
+                    for (const key in data[ages[i]]) {
+                        result[key] = data[ages[i]][key] + ratio * (data[ages[i + 1]][key] - data[ages[i]][key]);
+                    }
+                    return result;
+                }
+            }
+            return data[ages[0]];
+        }
+
+        function getPercentile(value, ref) {
+            if (value <= ref.P3) return { percentile: 'P3', status: 'low', label: '< P3' };
+            if (value <= ref.P15) return { percentile: 'P15', status: 'warning', label: 'P3-P15' };
+            if (value <= ref.P50) return { percentile: 'P50', status: 'normal', label: 'P15-P50' };
+            if (value <= ref.P85) return { percentile: 'P85', status: 'normal', label: 'P50-P85' };
+            if (value <= ref.P97) return { percentile: 'P97', status: 'warning', label: 'P85-P97' };
+            return { percentile: '>P97', status: 'alert', label: '> P97' };
+        }
+
+        function getVitalReference(age, type) {
+            const standards = type === 'heartRate' ? vitalSignsStandards.heartRate :
+                             type === 'respRate' ? vitalSignsStandards.respRate : null;
+            
+            if (!standards) return null;
+            
+            for (const item of standards) {
+                if (age >= item.ageMin && age < item.ageMax) {
+                    return item;
+                }
+            }
+            return standards[standards.length - 1];
+        }
+
+        function getBPReference(age, gender) {
+            const standards = gender === 'boy' ? vitalSignsStandards.bpMale : vitalSignsStandards.bpFemale;
+            for (const item of standards) {
+                if (age >= item.ageMin && age < item.ageMax) {
+                    return item;
+                }
+            }
+            return standards[standards.length - 1];
+        }
+
+        function calculate() {
+            const years = parseFloat(document.getElementById('ageYears').value) || 0;
+            const months = parseFloat(document.getElementById('ageMonths').value) || 0;
+            const ageInYears = years + months / 12;
+            const ageInMonths = years * 12 + months;
+            
+            const height = parseFloat(document.getElementById('height').value);
+            const weight = parseFloat(document.getElementById('weight').value);
+            const heartRate = parseFloat(document.getElementById('heartRate').value);
+            const respRate = parseFloat(document.getElementById('respRate').value);
+            const sysBp = parseFloat(document.getElementById('sysBp').value);
+            const diaBp = parseFloat(document.getElementById('diaBp').value);
+
+            updateAgeDisplay();
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.classList.add('show');
+
+            // 生长发育评估
+            if (height && weight) {
+                const std = chineseStandards[currentGender];
+                
+                // 体重/年龄
+                if (ageInYears <= 18) {
+                    const weightRef = interpolate(std.weightForAge, Math.min(ageInYears, 18));
+                    const weightResult = getPercentile(weight, weightRef);
+                    document.getElementById('weightAge').innerHTML = renderGrowthResult(
+                        '体重/年龄评估',
+                        weight,
+                        'kg',
+                        weightResult,
+                        weightRef
+                    );
+                }
+
+                // 身高/年龄
+                if (ageInYears <= 18) {
+                    const heightRef = interpolate(std.heightForAge, Math.min(ageInYears, 18));
+                    const heightResult = getPercentile(height, heightRef);
+                    document.getElementById('heightAge').innerHTML = renderGrowthResult(
+                        '身高/年龄评估',
+                        height,
+                        'cm',
+                        heightResult,
+                        heightRef
+                    );
+                }
+
+                // 体重/身高
+                const heightKey = Math.round(height / 10) * 10;
+                if (std.weightForHeight[heightKey]) {
+                    const whRef = std.weightForHeight[heightKey];
+                    const whResult = getPercentile(weight, whRef);
+                    document.getElementById('weightHeight').innerHTML = renderGrowthResult(
+                        `体重/身高评估 (身高${height}cm)`,
+                        weight,
+                        'kg',
+                        whResult,
+                        whRef
+                    );
+                } else {
+                    document.getElementById('weightHeight').innerHTML = '<p style="padding:20px;text-align:center;color:#666;">该身高超出评估范围</p>';
+                }
+            }
+
+            // 生命体征评估
+            let vitalHtml = '<div class="vital-signs-grid">';
+            
+            // 心率
+            if (heartRate) {
+                const hrRef = getVitalReference(ageInYears, 'heartRate');
+                if (hrRef) {
+                    let status = 'normal';
+                    let statusText = '正常';
+                    if (heartRate < hrRef.min) { status = 'low'; statusText = '偏低'; }
+                    if (heartRate > hrRef.max) { status = 'high'; statusText = '偏高'; }
+                    
+                    vitalHtml += `
+                        <div class="vital-card ${status}">
+                            <div class="vital-title">❤️ 心率</div>
+                            <div class="vital-value">${heartRate} <span style="font-size:0.9rem;color:#999;">次/分</span></div>
+                            <div class="vital-ref">参考范围：${hrRef.min}-${hrRef.max} 次/分</div>
+                            <span class="vital-status status-${status === 'low' ? 'warning' : status === 'high' ? 'alert' : 'normal'}">${statusText}</span>
+                        </div>
+                    `;
+                }
+            }
+
+            // 呼吸
+            if (respRate) {
+                const rrRef = getVitalReference(ageInYears, 'respRate');
+                if (rrRef) {
+                    let status = 'normal';
+                    let statusText = '正常';
+                    if (respRate < rrRef.min) { status = 'low'; statusText = '偏低'; }
+                    if (respRate > rrRef.max) { status = 'high'; statusText = '偏高'; }
+                    
+                    vitalHtml += `
+                        <div class="vital-card ${status}">
+                            <div class="vital-title">🫁 呼吸频率</div>
+                            <div class="vital-value">${respRate} <span style="font-size:0.9rem;color:#999;">次/分</span></div>
+                            <div class="vital-ref">参考范围：${rrRef.min}-${rrRef.max} 次/分</div>
+                            <span class="vital-status status-${status === 'low' ? 'warning' : status === 'high' ? 'alert' : 'normal'}">${statusText}</span>
+                        </div>
+                    `;
+                }
+            }
+
+            // 血压
+            if (sysBp) {
+                const bpRef = getBPReference(ageInYears, currentGender);
+                if (bpRef) {
+                    let status = 'normal';
+                    let msgs = [];
+                    if (sysBp > bpRef.sysMax) { status = 'high'; msgs.push(`收缩压>${bpRef.sysMax}`); }
+                    if (diaBp && diaBp > bpRef.diaMax) { status = 'high'; msgs.push(`舒张压>${bpRef.diaMax}`); }
+                    
+                    const statusText = status === 'high' ? '需关注' : '正常';
+                    const bpText = diaBp ? `${sysBp}/${diaBp}` : `${sysBp}`;
+                    
+                    vitalHtml += `
+                        <div class="vital-card ${status}">
+                            <div class="vital-title">🩸 血压</div>
+                            <div class="vital-value">${bpText} <span style="font-size:0.9rem;color:#999;">mmHg</span></div>
+                            <div class="vital-ref">参考上限：${bpRef.sysMax}/${bpRef.diaMax} mmHg</div>
+                            <span class="vital-status status-${status === 'high' ? 'alert' : 'normal'}">${statusText}</span>
+                        </div>
+                    `;
+                }
+            }
+
+            vitalHtml += '</div>';
+            
+            if (!heartRate && !respRate && !sysBp) {
+                vitalHtml = '<p style="padding:20px;text-align:center;color:#666;">请输入至少一项生命体征数据进行评估</p>';
+            }
+            
+            document.getElementById('vitalSignsResults').innerHTML = vitalHtml;
+            
+            // 滚动到结果区域
+            resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderGrowthResult(title, value, unit, result, ref) {
+            const statusLabels = {
+                'low': '<span class="status-badge status-alert">低于正常</span>',
+                'warning': '<span class="status-badge status-warning">边缘范围</span>',
+                'normal': '<span class="status-badge status-normal">正常范围</span>',
+                'alert': '<span class="status-badge status-alert">高于正常</span>'
+            };
+
+            return `
+                <div class="result-section">
+                    <h3>${title}</h3>
+                    <div class="result-grid">
+                        <div class="result-item">
+                            <div class="result-label">测量值</div>
+                            <div class="result-value">${value}<span class="result-unit">${unit}</span></div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-label">百分位</div>
+                            <div class="result-value">${result.label}</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-label">评估</div>
+                            <div>${statusLabels[result.status]}</div>
+                        </div>
+                    </div>
+                    <div class="interpretation">
+                        <div class="interpretation-title">📊 参考范围</div>
+                        <div class="interpretation-text">
+                            P3: ${ref.P3.toFixed(1)} | 
+                            P15: ${ref.P15.toFixed(1)} | 
+                            P50: ${ref.P50.toFixed(1)} | 
+                            P85: ${ref.P85.toFixed(1)} | 
+                            P97: ${ref.P97.toFixed(1)} ${unit}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // 初始化
+        updateAgeDisplay();
+    </script>
+</body>
+</html>
