@@ -1,16 +1,17 @@
 """
 Pediatric Growth Assessment Tool
-Based on WHO Child Growth Standards (2006)
+Based on Chinese Growth Standards (首都儿科研究所 0-18 岁)
 
 This module provides functions to assess children's growth parameters
 including weight-for-age, height-for-age, and weight-for-height.
 """
 
 import bisect
-from who_growth_standards import (
-    BOYS_WEIGHT_AGE, GIRLS_WEIGHT_AGE,
-    BOYS_HEIGHT_AGE, GIRLS_HEIGHT_AGE,
-    BOYS_WEIGHT_HEIGHT, GIRLS_WEIGHT_HEIGHT
+from chinese_growth_standards import (
+    BOYS_WEIGHT_AGE_CN, GIRLS_WEIGHT_AGE_CN,
+    BOYS_HEIGHT_AGE_CN, GIRLS_HEIGHT_AGE_CN,
+    BOYS_WEIGHT_HEIGHT_CN, GIRLS_WEIGHT_HEIGHT_CN,
+    CN_MIN_AGE_MONTHS, CN_MAX_AGE_MONTHS, CN_MIN_HEIGHT_CM, CN_MAX_HEIGHT_CM
 )
 
 
@@ -136,7 +137,7 @@ def get_percentile_and_sd(value: float, reference_data: dict) -> dict:
 
 def assess_weight_for_age(sex: str, age_years: int, age_months: int, weight_kg: float) -> dict:
     """
-    Assess weight-for-age based on WHO standards.
+    Assess weight-for-age based on Chinese standards.
     
     Args:
         sex: 'male' or 'female'
@@ -149,11 +150,11 @@ def assess_weight_for_age(sex: str, age_years: int, age_months: int, weight_kg: 
     """
     total_months = calculate_age_in_months(age_years, age_months)
     
-    if total_months > 60:
-        return {"error": "Age exceeds 5 years (60 months). This tool is designed for children 0-5 years."}
+    if total_months > CN_MAX_AGE_MONTHS:
+        return {"error": f"Age exceeds 18 years ({CN_MAX_AGE_MONTHS} months). This tool is designed for children 0-18 years."}
     
     # Select appropriate reference data
-    reference_data = BOYS_WEIGHT_AGE if sex.lower() == 'male' else GIRLS_WEIGHT_AGE
+    reference_data = BOYS_WEIGHT_AGE_CN if sex.lower() == 'male' else GIRLS_WEIGHT_AGE_CN
     
     # Find nearest age points for interpolation
     lower_month, upper_month, lower_data, upper_data = find_nearest_key(reference_data, total_months)
@@ -182,7 +183,7 @@ def assess_weight_for_age(sex: str, age_years: int, age_months: int, weight_kg: 
 
 def assess_height_for_age(sex: str, age_years: int, age_months: int, height_cm: float) -> dict:
     """
-    Assess height-for-age based on WHO standards.
+    Assess height-for-age based on Chinese standards.
     
     Args:
         sex: 'male' or 'female'
@@ -195,11 +196,11 @@ def assess_height_for_age(sex: str, age_years: int, age_months: int, height_cm: 
     """
     total_months = calculate_age_in_months(age_years, age_months)
     
-    if total_months > 60:
-        return {"error": "Age exceeds 5 years (60 months). This tool is designed for children 0-5 years."}
+    if total_months > CN_MAX_AGE_MONTHS:
+        return {"error": f"Age exceeds 18 years ({CN_MAX_AGE_MONTHS} months). This tool is designed for children 0-18 years."}
     
     # Select appropriate reference data
-    reference_data = BOYS_HEIGHT_AGE if sex.lower() == 'male' else GIRLS_HEIGHT_AGE
+    reference_data = BOYS_HEIGHT_AGE_CN if sex.lower() == 'male' else GIRLS_HEIGHT_AGE_CN
     
     # Find nearest age points for interpolation
     lower_month, upper_month, lower_data, upper_data = find_nearest_key(reference_data, total_months)
@@ -228,7 +229,7 @@ def assess_height_for_age(sex: str, age_years: int, age_months: int, height_cm: 
 
 def assess_weight_for_height(sex: str, height_cm: float, weight_kg: float) -> dict:
     """
-    Assess weight-for-height based on WHO standards.
+    Assess weight-for-height based on Chinese standards.
     
     Args:
         sex: 'male' or 'female'
@@ -238,8 +239,11 @@ def assess_weight_for_height(sex: str, height_cm: float, weight_kg: float) -> di
     Returns:
         Dictionary containing assessment results
     """
+    if height_cm < CN_MIN_HEIGHT_CM or height_cm > CN_MAX_HEIGHT_CM:
+        return {"error": f"Height must be between {CN_MIN_HEIGHT_CM}cm and {CN_MAX_HEIGHT_CM}cm for weight-for-height assessment."}
+    
     # Select appropriate reference data
-    reference_data = BOYS_WEIGHT_HEIGHT if sex.lower() == 'male' else GIRLS_WEIGHT_HEIGHT
+    reference_data = BOYS_WEIGHT_HEIGHT_CN if sex.lower() == 'male' else GIRLS_WEIGHT_HEIGHT_CN
     
     # Find nearest height points for interpolation
     lower_height, upper_height, lower_data, upper_data = find_nearest_key(reference_data, height_cm)
