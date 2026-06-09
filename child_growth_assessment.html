@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>儿童生长发育评估工具</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .gender-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .gender-option {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .gender-option.active {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .results-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+        }
+
+        .result-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .result-card h3 {
+            color: #667eea;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .result-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .result-detail {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .sd-indicator {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .sd-normal { background: #d4edda; color: #155724; }
+        .sd-low { background: #fff3cd; color: #856404; }
+        .sd-high { background: #f8d7da; color: #721c24; }
+
+        .chart-container {
+            margin-top: 20px;
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 177.78%; /* 16:9 ratio */
+        }
+
+        .chart-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .assessment-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        .assessment-summary h3 {
+            margin-bottom: 10px;
+        }
+
+        .age-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👶 儿童生长发育评估工具</h1>
+            <p>基于首都儿科研究所正常儿童生长参考值</p>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <h2 style="margin-bottom: 20px; color: #333;">基本信息</h2>
+                
+                <div class="gender-selector">
+                    <div class="gender-option active" data-gender="male">男孩</div>
+                    <div class="gender-option" data-gender="female">女孩</div>
+                </div>
+
+                <div class="age-inputs">
+                    <div class="input-group">
+                        <label>年龄（岁）</label>
+                        <input type="number" id="ageYears" min="0" max="18" value="5" placeholder="岁">
+                    </div>
+                    <div class="input-group">
+                        <label>年龄（月）</label>
+                        <input type="number" id="ageMonths" min="0" max="11" value="0" placeholder="月">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>身高（cm）</label>
+                    <input type="number" id="height" min="50" max="200" value="110" placeholder="厘米">
+                </div>
+
+                <div class="input-group">
+                    <label>体重（kg）</label>
+                    <input type="number" id="weight" min="2" max="100" value="18" placeholder="千克">
+                </div>
+
+                <button class="btn" onclick="calculateGrowth()">开始评估</button>
+            </div>
+
+            <div class="results-section">
+                <h2 style="margin-bottom: 20px; color: #333;">评估结果</h2>
+                
+                <div id="resultsContent" class="hidden">
+                    <div class="tabs">
+                        <div class="tab active" data-chart="height">年龄别身高</div>
+                        <div class="tab" data-chart="weight">年龄别体重</div>
+                        <div class="tab" data-chart="weightForHeight">身高别体重</div>
+                        <div class="tab" data-chart="bmi">BMI</div>
+                    </div>
+
+                    <div id="heightResults" class="chart-view">
+                        <div class="result-card">
+                            <h3>年龄别身高</h3>
+                            <div class="result-value" id="heightValue">-- cm</div>
+                            <div class="result-detail" id="heightDetail">--</div>
+                            <div id="heightSD" class="sd-indicator">--</div>
+                        </div>
+                    </div>
+
+                    <div id="weightResults" class="chart-view hidden">
+                        <div class="result-card">
+                            <h3>年龄别体重</h3>
+                            <div class="result-value" id="weightValue">-- kg</div>
+                            <div class="result-detail" id="weightDetail">--</div>
+                            <div id="weightSD" class="sd-indicator">--</div>
+                        </div>
+                    </div>
+
+                    <div id="weightForHeightResults" class="chart-view hidden">
+                        <div class="result-card">
+                            <h3>身高别体重</h3>
+                            <div class="result-value" id="weightForHeightValue">-- kg</div>
+                            <div class="result-detail" id="weightForHeightDetail">--</div>
+                            <div id="weightForHeightSD" class="sd-indicator">--</div>
+                        </div>
+                    </div>
+
+                    <div id="bmiResults" class="chart-view hidden">
+                        <div class="result-card">
+                            <h3>BMI指数</h3>
+                            <div class="result-value" id="bmiValue">--</div>
+                            <div class="result-detail" id="bmiDetail">--</div>
+                            <div id="bmiSD" class="sd-indicator">--</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <div class="chart-wrapper">
+                            <canvas id="growthChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="assessment-summary">
+                        <h3>综合评估</h3>
+                        <p id="summaryText">请输入儿童信息进行评估</p>
+                    </div>
+                </div>
+
+                <div id="placeholderContent">
+                    <p style="text-align: center; color: #999; padding: 40px 0;">
+                        请输入儿童信息并点击"开始评估"查看结果
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 首都儿科研究所生长参考值数据（简化版，实际需要完整数据）
+        const growthStandards = {
+            male: {
+                heightForAge: {
+                    0: { median: 50.4, sd: 1.8, p3: 46.8, p97: 54.0 },
+                    0.25: { median: 56.7, sd: 2.1, p3: 52.5, p97: 60.9 },
+                    0.5: { median: 62.4, sd: 2.3, p3: 57.8, p97: 67.0 },
+                    0.75: { median: 65.9, sd: 2.4, p3: 61.1, p97: 70.7 },
+                    1: { median: 76.5, sd: 2.6, p3: 71.3, p97: 81.7 },
+                    1.5: { median: 82.3, sd: 2.8, p3: 76.7, p97: 87.9 },
+                    2: { median: 87.1, sd: 3.0, p3: 81.1, p97: 93.1 },
+                    2.5: { median: 91.9, sd: 3.2, p3: 85.5, p97: 98.3 },
+                    3: { median: 96.8, sd: 3.4, p3: 90.0, p97: 103.6 },
+                    4: { median: 104.1, sd: 3.8, p3: 96.5, p97: 111.7 },
+                    5: { median: 111.3, sd: 4.2, p3: 102.9, p97: 119.7 },
+                    6: { median: 117.7, sd: 4.5, p3: 108.7, p97: 126.7 },
+                    7: { median: 124.0, sd: 4.8, p3: 114.4, p97: 133.6 },
+                    8: { median: 130.0, sd: 5.2, p3: 119.6, p97: 140.4 },
+                    9: { median: 135.4, sd: 5.6, p3: 124.2, p97: 146.6 },
+                    10: { median: 140.2, sd: 6.0, p3: 128.2, p97: 152.2 },
+                    11: { median: 145.3, sd: 6.5, p3: 132.3, p97: 158.3 },
+                    12: { median: 151.9, sd: 7.0, p3: 137.9, p97: 165.9 },
+                    13: { median: 159.5, sd: 7.3, p3: 144.9, p97: 174.1 },
+                    14: { median: 165.9, sd: 7.2, p3: 151.5, p97: 180.3 },
+                    15: { median: 169.8, sd: 6.8, p3: 156.2, p97: 183.4 },
+                    16: { median: 171.6, sd: 6.4, p3: 158.8, p97: 184.4 },
+                    17: { median: 172.3, sd: 6.2, p3: 159.9, p97: 184.7 },
+                    18: { median: 172.7, sd: 6.1, p3: 160.5, p97: 184.9 }
+                },
+                weightForAge: {
+                    0: { median: 3.3, sd: 0.4, p3: 2.5, p97: 4.1 },
+                    0.25: { median: 5.0, sd: 0.6, p3: 3.8, p97: 6.2 },
+                    0.5: { median: 6.9, sd: 0.8, p3: 5.3, p97: 8.5 },
+                    0.75: { median: 8.0, sd: 0.9, p3: 6.2, p97: 9.8 },
+                    1: { median: 9.6, sd: 1.1, p3: 7.4, p97: 11.8 },
+                    1.5: { median: 10.9, sd: 1.2, p3: 8.5, p97: 13.3 },
+                    2: { median: 12.2, sd: 1.3, p3: 9.6, p97: 14.8 },
+                    2.5: { median: 13.3, sd: 1.4, p3: 10.5, p97: 16.1 },
+                    3: { median: 14.4, sd: 1.5, p3: 11.4, p97: 17.4 },
+                    4: { median: 16.3, sd: 1.8, p3: 12.7, p97: 19.9 },
+                    5: { median: 18.3, sd: 2.1, p3: 14.1, p97: 22.5 },
+                    6: { median: 20.3, sd: 2.4, p3: 15.5, p97: 25.1 },
+                    7: { median: 22.5, sd: 2.8, p3: 16.9, p97: 28.1 },
+                    8: { median: 25.0, sd: 3.2, p3: 18.6, p97: 31.4 },
+                    9: { median: 27.6, sd: 3.6, p3: 20.4, p97: 34.8 },
+                    10: { median: 30.5, sd: 4.1, p3: 22.3, p97: 38.7 },
+                    11: { median: 33.8, sd: 4.6, p3: 24.6, p97: 43.0 },
+                    12: { median: 37.5, sd: 5.2, p3: 27.1, p97: 47.9 },
+                    13: { median: 41.5, sd: 5.8, p3: 29.9, p97: 53.1 },
+                    14: { median: 45.8, sd: 6.3, p3: 33.2, p97: 58.4 },
+                    15: { median: 49.6, sd: 6.7, p3: 36.2, p97: 63.0 },
+                    16: { median: 52.4, sd: 6.9, p3: 38.6, p97: 66.2 },
+                    17: { median: 54.2, sd: 7.0, p3: 40.2, p97: 68.2 },
+                    18: { median: 55.3, sd: 7.1, p3: 41.1, p97: 69.5 }
+                },
+                weightForHeight: {
+                    70: { median: 8.5, sd: 0.8, p3: 6.9, p97: 10.1 },
+                    75: { median: 9.2, sd: 0.9, p3: 7.4, p97: 11.0 },
+                    80: { median: 10.0, sd: 1.0, p3: 8.0, p97: 12.0 },
+                    85: { median: 10.9, sd: 1.1, p3: 8.7, p97: 13.1 },
+                    90: { median: 11.9, sd: 1.2, p3: 9.5, p97: 14.3 },
+                    95: { median: 13.0, sd: 1.3, p3: 10.4, p97: 15.6 },
+                    100: { median: 14.2, sd: 1.4, p3: 11.4, p97: 17.0 },
+                    105: { median: 15.5, sd: 1.5, p3: 12.5, p97: 18.5 },
+                    110: { median: 16.9, sd: 1.6, p3: 13.7, p97: 20.1 },
+                    115: { median: 18.4, sd: 1.8, p3: 14.8, p97: 22.0 },
+                    120: { median: 20.0, sd: 2.0, p3: 16.0, p97: 24.0 },
+                    125: { median: 21.7, sd: 2.2, p3: 17.3, p97: 26.1 },
+                    130: { median: 23.5, sd: 2.4, p3: 18.7, p97: 28.3 },
+                    135: { median: 25.4, sd: 2.7, p3: 20.0, p97: 30.8 },
+                    140: { median: 27.4, sd: 3.0, p3: 21.4, p97: 33.4 },
+                    145: { median: 29.5, sd: 3.3, p3: 22.9, p97: 36.1 },
+                    150: { median: 31.7, sd: 3.6, p3: 24.5, p97: 38.9 },
+                    155: { median: 34.0, sd: 3.9, p3: 26.2, p97: 41.8 },
+                    160: { median: 36.4, sd: 4.2, p3: 28.0, p97: 44.8 },
+                    165: { median: 38.9, sd: 4.5, p3: 29.9, p97: 47.9 },
+                    170: { median: 41.5, sd: 4.8, p3: 31.9, p97: 51.1 },
+                    175: { median: 44.2, sd: 5.1, p3: 34.0, p97: 54.4 },
+                    180: { median: 47.0, sd: 5.4, p3: 36.2, p97: 57.8 }
+                },
+                bmiForAge: {
+                    2: { median: 16.0, sd: 1.2, p3: 13.6, p97: 18.4 },
+                    3: { median: 15.5, sd: 1.1, p3: 13.3, p97: 17.7 },
+                    4: { median: 15.2, sd: 1.0, p3: 13.2, p97: 17.2 },
+                    5: { median: 15.0, sd: 1.0, p3: 13.0, p97: 17.0 },
+                    6: { median: 14.9, sd: 1.0, p3: 12.9, p97: 16.9 },
+                    7: { median: 14.8, sd: 1.1, p3: 12.6, p97: 17.0 },
+                    8: { median: 14.8, sd: 1.2, p3: 12.4, p97: 17.2 },
+                    9: { median: 14.9, sd: 1.3, p3: 12.3, p97: 17.5 },
+                    10: { median: 15.1, sd: 1.5, p3: 12.1, p97: 18.1 },
+                    11: { median: 15.4, sd: 1.7, p3: 12.0, p97: 18.8 },
+                    12: { median: 15.8, sd: 1.9, p3: 12.0, p97: 19.6 },
+                    13: { median: 16.3, sd: 2.1, p3: 12.1, p97: 20.5 },
+                    14: { median: 16.9, sd: 2.3, p3: 12.3, p97: 21.5 },
+                    15: { median: 17.4, sd: 2.4, p3: 12.6, p97: 22.2 },
+                    16: { median: 17.8, sd: 2.5, p3: 12.8, p97: 22.8 },
+                    17: { median: 18.1, sd: 2.5, p3: 13.1, p97: 23.1 },
+                    18: { median: 18.3, sd: 2.5, p3: 13.3, p97: 23.3 }
+                }
+            },
+            female: {
+                heightForAge: {
+                    0: { median: 49.7, sd: 1.7, p3: 46.3, p97: 53.1 },
+                    0.25: { median: 55.8, sd: 2.0, p3: 51.8, p97: 59.8 },
+                    0.5: { median: 61.5, sd: 2.2, p3: 57.1, p97: 65.9 },
+                    0.75: { median: 65.0, sd: 2.3, p3: 60.4, p97: 69.6 },
+                    1: { median: 75.0, sd: 2.5, p3: 70.0, p97: 80.0 },
+                    1.5: { median: 80.7, sd: 2.7, p3: 75.3, p97: 86.1 },
+                    2: { median: 85.7, sd: 2.9, p3: 79.9, p97: 91.5 },
+                    2.5: { median: 90.7, sd: 3.1, p3: 84.5, p97: 96.9 },
+                    3: { median: 95.6, sd: 3.3, p3: 89.0, p97: 102.2 },
+                    4: { median: 103.1, sd: 3.7, p3: 95.7, p97: 110.5 },
+                    5: { median: 110.2, sd: 4.1, p3: 102.0, p97: 118.4 },
+                    6: { median: 116.6, sd: 4.4, p3: 107.8, p97: 125.4 },
+                    7: { median: 122.5, sd: 4.7, p3: 113.1, p97: 131.9 },
+                    8: { median: 128.5, sd: 5.1, p3: 118.3, p97: 138.7 },
+                    9: { median: 134.1, sd: 5.5, p3: 123.1, p97: 145.1 },
+                    10: { median: 139.8, sd: 5.9, p3: 128.0, p97: 151.6 },
+                    11: { median: 145.9, sd: 6.3, p3: 133.3, p97: 158.5 },
+                    12: { median: 151.7, sd: 6.5, p3: 138.7, p97: 164.7 },
+                    13: { median: 156.3, sd: 6.3, p3: 143.7, p97: 168.9 },
+                    14: { median: 159.3, sd: 6.0, p3: 147.3, p97: 171.3 },
+                    15: { median: 160.9, sd: 5.8, p3: 149.3, p97: 172.5 },
+                    16: { median: 161.8, sd: 5.7, p3: 150.4, p97: 173.2 },
+                    17: { median: 162.3, sd: 5.6, p3: 151.1, p97: 173.5 },
+                    18: { median: 162.5, sd: 5.5, p3: 151.5, p97: 173.5 }
+                },
+                weightForAge: {
+                    0: { median: 3.2, sd: 0.4, p3: 2.4, p97: 4.0 },
+                    0.25: { median: 4.8, sd: 0.6, p3: 3.6, p97: 6.0 },
+                    0.5: { median: 6.5, sd: 0.7, p3: 5.1, p97: 7.9 },
+                    0.75: { median: 7.5, sd: 0.8, p3: 5.9, p97: 9.1 },
+                    1: { median: 8.9, sd: 1.0, p3: 6.9, p97: 10.9 },
+                    1.5: { median: 10.2, sd: 1.1, p3: 8.0, p97: 12.4 },
+                    2: { median: 11.5, sd: 1.2, p3: 9.1, p97: 13.9 },
+                    2.5: { median: 12.6, sd: 1.3, p3: 10.0, p97: 15.2 },
+                    3: { median: 13.7, sd: 1.4, p3: 10.9, p97: 16.5 },
+                    4: { median: 15.7, sd: 1.7, p3: 12.3, p97: 19.1 },
+                    5: { median: 17.7, sd: 2.0, p3: 13.7, p97: 21.7 },
+                    6: { median: 19.8, sd: 2.3, p3: 15.2, p97: 24.4 },
+                    7: { median: 22.0, sd: 2.7, p3: 16.6, p97: 27.4 },
+                    8: { median: 24.6, sd: 3.1, p3: 18.4, p97: 30.8 },
+                    9: { median: 27.4, sd: 3.6, p3: 20.2, p97: 34.6 },
+                    10: { median: 30.6, sd: 4.1, p3: 22.4, p97: 38.8 },
+                    11: { median: 34.3, sd: 4.7, p3: 24.9, p97: 43.7 },
+                    12: { median: 38.4, sd: 5.3, p3: 27.8, p97: 49.0 },
+                    13: { median: 42.5, sd: 5.8, p3: 30.9, p97: 54.1 },
+                    14: { median: 46.0, sd: 6.1, p3: 33.8, p97: 58.2 },
+                    15: { median: 48.5, sd: 6.3, p3: 35.9, p97: 61.1 },
+                    16: { median: 50.2, sd: 6.4, p3: 37.4, p97: 63.0 },
+                    17: { median: 51.3, sd: 6.5, p3: 38.3, p97: 64.3 },
+                    18: { median: 52.0, sd: 6.5, p3: 39.0, p97: 65.0 }
+                },
+                weightForHeight: {
+                    70: { median: 8.2, sd: 0.8, p3: 6.6, p97: 9.8 },
+                    75: { median: 8.9, sd: 0.9, p3: 7.1, p97: 10.7 },
+                    80: { median: 9.7, sd: 1.0, p3: 7.7, p97: 11.7 },
+                    85: { median: 10.6, sd: 1.1, p3: 8.4, p97: 12.8 },
+                    90: { median: 11.6, sd: 1.2, p3: 9.2, p97: 14.0 },
+                    95: { median: 12.7, sd: 1.3, p3: 10.1, p97: 15.3 },
+                    100: { median: 13.9, sd: 1.4, p3: 11.1, p97: 16.7 },
+                    105: { median: 15.2, sd: 1.5, p3: 12.2, p97: 18.2 },
+                    110: { median: 16.6, sd: 1.6, p3: 13.4, p97: 19.8 },
+                    115: { median: 18.1, sd: 1.8, p3: 14.5, p97: 21.7 },
+                    120: { median: 19.7, sd: 2.0, p3: 15.7, p97: 23.7 },
+                    125: { median: 21.4, sd: 2.2, p3: 17.0, p97: 25.8 },
+                    130: { median: 23.2, sd: 2.4, p3: 18.4, p97: 28.0 },
+                    135: { median: 25.1, sd: 2.7, p3: 19.7, p97: 30.5 },
+                    140: { median: 27.1, sd: 3.0, p3: 21.1, p97: 33.1 },
+                    145: { median: 29.2, sd: 3.3, p3: 22.6, p97: 35.8 },
+                    150: { median: 31.4, sd: 3.6, p3: 24.2, p97: 38.6 },
+                    155: { median: 33.7, sd: 3.9, p3: 25.9, p97: 41.5 },
+                    160: { median: 36.1, sd: 4.2, p3: 27.7, p97: 44.5 },
+                    165: { median: 38.6, sd: 4.5, p3: 29.6, p97: 47.6 },
+                    170: { median: 41.2, sd: 4.8, p3: 31.6, p97: 50.8 },
+                    175: { median: 43.9, sd: 5.1, p3: 33.7, p97: 54.1 },
+                    180: { median: 46.7, sd: 5.4, p3: 35.9, p97: 57.5 }
+                },
+                bmiForAge: {
+                    2: { median: 15.8, sd: 1.2, p3: 13.4, p97: 18.2 },
+                    3: { median: 15.3, sd: 1.1, p3: 13.1, p97: 17.5 },
+                    4: { median: 15.0, sd: 1.0, p3: 13.0, p97: 17.0 },
+                    5: { median: 14.8, sd: 1.0, p3: 12.8, p97: 16.8 },
+                    6: { median: 14.7, sd: 1.0, p3: 12.7, p97: 16.7 },
+                    7: { median: 14.7, sd: 1.1, p3: 12.5, p97: 16.9 },
+                    8: { median: 14.8, sd: 1.2, p3: 12.4, p97: 17.2 },
+                    9: { median: 15.0, sd: 1.3, p3: 12.4, p97: 17.6 },
+                    10: { median: 15.3, sd: 1.5, p3: 12.3, p97: 18.3 },
+                    11: { median: 15.7, sd: 1.7, p3: 12.3, p97: 19.1 },
+                    12: { median: 16.2, sd: 1.9, p3: 12.4, p97: 20.0 },
+                    13: { median: 16.8, sd: 2.1, p3: 12.6, p97: 21.0 },
+                    14: { median: 17.4, sd: 2.3, p3: 12.8, p97: 22.0 },
+                    15: { median: 17.9, sd: 2.4, p3: 13.1, p97: 22.7 },
+                    16: { median: 18.3, sd: 2.5, p3: 13.3, p97: 23.3 },
+                    17: { median: 18.6, sd: 2.5, p3: 13.6, p97: 23.6 },
+                    18: { median: 18.8, sd: 2.5, p3: 13.8, p97: 23.8 }
+                }
+            }
+        };
+
+        let currentGender = 'male';
+        let currentChart = 'height';
+        let growthChart = null;
+
+        // 性别选择
+        document.querySelectorAll('.gender-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.gender-option').forEach(o => o.classList.remove('active'));
+                this.classList.add('active');
+                currentGender = this.dataset.gender;
+            });
+        });
+
+        // Tab切换
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                currentChart = this.dataset.chart;
+                
+                document.querySelectorAll('.chart-view').forEach(view => view.classList.add('hidden'));
+                document.getElementById(currentChart + 'Results').classList.remove('hidden');
+                
+                updateChart();
+            });
+        });
+
+        function interpolateData(data, age) {
+            const ages = Object.keys(data).map(Number).sort((a, b) => a - b);
+            
+            if (age <= ages[0]) return data[ages[0]];
+            if (age >= ages[ages.length - 1]) return data[ages[ages.length - 1]];
+            
+            for (let i = 0; i < ages.length - 1; i++) {
+                if (age >= ages[i] && age <= ages[i + 1]) {
+                    const ratio = (age - ages[i]) / (ages[i + 1] - ages[i]);
+                    return {
+                        median: data[ages[i]].median + ratio * (data[ages[i + 1]].median - data[ages[i]].median),
+                        sd: data[ages[i]].sd + ratio * (data[ages[i + 1]].sd - data[ages[i]].sd),
+                        p3: data[ages[i]].p3 + ratio * (data[ages[i + 1]].p3 - data[ages[i]].p3),
+                        p97: data[ages[i]].p97 + ratio * (data[ages[i + 1]].p97 - data[ages[i]].p97)
+                    };
+                }
+            }
+        }
+
+        function calculateSD(value, median, sd) {
+            return ((value - median) / sd).toFixed(2);
+        }
+
+        function calculatePercentile(value, median, sd) {
+            const z = (value - median) / sd;
+            const percentile = (1 / (1 + Math.exp(-1.702 * z))) * 100;
+            return percentile.toFixed(1);
+        }
+
+        function getSDClass(sd) {
+            if (Math.abs(sd) <= 1) return 'sd-normal';
+            if (sd < -2 || sd > 2) return 'sd-high';
+            return 'sd-low';
+        }
+
+        function getSDText(sd) {
+            if (Math.abs(sd) <= 1) return '正常范围';
+            if (sd < -2) return '明显偏低';
+            if (sd > 2) return '明显偏高';
+            if (sd < 0) return '偏低';
+            return '偏高';
+        }
+
+        function calculateGrowth() {
+            const ageYears = parseFloat(document.getElementById('ageYears').value) || 0;
+            const ageMonths = parseFloat(document.getElementById('ageMonths').value) || 0;
+            const height = parseFloat(document.getElementById('height').value) || 0;
+            const weight = parseFloat(document.getElementById('weight').value) || 0;
+
+            if (!height || !weight) {
+                alert('请输入完整的身高和体重信息');
+                return;
+            }
+
+            const ageInYears = ageYears + ageMonths / 12;
+            const bmi = weight / ((height / 100) ** 2);
+
+            const standards = growthStandards[currentGender];
+            
+            // 年龄别身高
+            const heightStd = interpolateData(standards.heightForAge, ageInYears);
+            const heightSD = calculateSD(height, heightStd.median, heightStd.sd);
+            const heightPercentile = calculatePercentile(height, heightStd.median, heightStd.sd);
+
+            // 年龄别体重
+            const weightStd = interpolateData(standards.weightForAge, ageInYears);
+            const weightSD = calculateSD(weight, weightStd.median, weightStd.sd);
+            const weightPercentile = calculatePercentile(weight, weightStd.median, weightStd.sd);
+
+            // 身高别体重
+            const weightForHeightStd = interpolateData(standards.weightForHeight, height);
+            const weightForHeightSD = calculateSD(weight, weightForHeightStd.median, weightForHeightStd.sd);
+            const weightForHeightPercentile = calculatePercentile(weight, weightForHeightStd.median, weightForHeightStd.sd);
+
+            // BMI
+            const bmiAge = Math.round(ageInYears);
+            const bmiStd = standards.bmiForAge[Math.min(Math.max(bmiAge, 2), 18)] || standards.bmiForAge[5];
+            const bmiSD = calculateSD(bmi, bmiStd.median, bmiStd.sd);
+            const bmiPercentile = calculatePercentile(bmi, bmiStd.median, bmiStd.sd);
+
+            // 显示结果
+            document.getElementById('placeholderContent').classList.add('hidden');
+            document.getElementById('resultsContent').classList.remove('hidden');
+
+            // 更新显示
+            document.getElementById('heightValue').textContent = height.toFixed(1) + ' cm';
+            document.getElementById('heightDetail').textContent = `同龄儿童平均值：${heightStd.median.toFixed(1)} cm，百分位：${heightPercentile}%`;
+            const heightSDEl = document.getElementById('heightSD');
+            heightSDEl.textContent = `Z评分：${heightSD} (${getSDText(heightSD)})`;
+            heightSDEl.className = 'sd-indicator ' + getSDClass(heightSD);
+
+            document.getElementById('weightValue').textContent = weight.toFixed(1) + ' kg';
+            document.getElementById('weightDetail').textContent = `同龄儿童平均值：${weightStd.median.toFixed(1)} kg，百分位：${weightPercentile}%`;
+            const weightSDEl = document.getElementById('weightSD');
+            weightSDEl.textContent = `Z评分：${weightSD} (${getSDText(weightSD)})`;
+            weightSDEl.className = 'sd-indicator ' + getSDClass(weightSD);
+
+            document.getElementById('weightForHeightValue').textContent = weight.toFixed(1) + ' kg';
+            document.getElementById('weightForHeightDetail').textContent = `同身高儿童平均值：${weightForHeightStd.median.toFixed(1)} kg，百分位：${weightForHeightPercentile}%`;
+            const weightForHeightSDEl = document.getElementById('weightForHeightSD');
+            weightForHeightSDEl.textContent = `Z评分：${weightForHeightSD} (${getSDText(weightForHeightSD)})`;
+            weightForHeightSDEl.className = 'sd-indicator ' + getSDClass(weightForHeightSD);
+
+            document.getElementById('bmiValue').textContent = bmi.toFixed(1);
+            document.getElementById('bmiDetail').textContent = `同龄儿童平均值：${bmiStd.median.toFixed(1)}，百分位：${bmiPercentile}%`;
+            const bmiSDEl = document.getElementById('bmiSD');
+            bmiSDEl.textContent = `Z评分：${bmiSD} (${getSDText(bmiSD)})`;
+            bmiSDEl.className = 'sd-indicator ' + getSDClass(bmiSD);
+
+            // 综合评估
+            let summary = `该${currentGender === 'male' ? '男孩' : '女孩'}年龄${ageYears}岁${ageMonths}个月，`;
+            summary += `身高${height.toFixed(1)}cm，体重${weight.toFixed(1)}kg，BMI ${bmi.toFixed(1)}。`;
+            
+            if (Math.abs(heightSD) <= 1) {
+                summary += ` 身高在正常范围内；`;
+            } else if (heightSD < -2) {
+                summary += ` 身高明显低于同龄儿童，建议咨询医生；`;
+            } else if (heightSD > 2) {
+                summary += ` 身高明显高于同龄儿童；`;
+            } else {
+                summary += ` 身高略${heightSD < 0 ? '低' : '高'}于平均水平；`;
+            }
+
+            if (Math.abs(weightSD) <= 1) {
+                summary += ` 体重在正常范围内。`;
+            } else if (weightSD < -2) {
+                summary += ` 体重明显偏低，建议关注营养状况。`;
+            } else if (weightSD > 2) {
+                summary += ` 体重明显偏高，建议关注饮食和运动。`;
+            } else {
+                summary += ` 体重略${weightSD < 0 ? '低' : '高'}于平均水平。`;
+            }
+
+            document.getElementById('summaryText').textContent = summary;
+
+            updateChart();
+        }
+
+        function updateChart() {
+            const ctx = document.getElementById('growthChart').getContext('2d');
+            
+            if (growthChart) {
+                growthChart.destroy();
+            }
+
+            const standards = growthStandards[currentGender];
+            let data, value, stdData, label, valueLabel;
+
+            if (currentChart === 'height') {
+                data = standards.heightForAge;
+                value = parseFloat(document.getElementById('height').value);
+                label = '年龄（岁）';
+                valueLabel = '身高（cm）';
+            } else if (currentChart === 'weight') {
+                data = standards.weightForAge;
+                value = parseFloat(document.getElementById('weight').value);
+                label = '年龄（岁）';
+                valueLabel = '体重（kg）';
+            } else if (currentChart === 'weightForHeight') {
+                data = standards.weightForHeight;
+                value = parseFloat(document.getElementById('weight').value);
+                label = '身高（cm）';
+                valueLabel = '体重（kg）';
+            } else if (currentChart === 'bmi') {
+                const ageYears = parseFloat(document.getElementById('ageYears').value) || 0;
+                const ageMonths = parseFloat(document.getElementById('ageMonths').value) || 0;
+                const ageInYears = ageYears + ageMonths / 12;
+                const bmi = parseFloat(document.getElementById('weight').value) / ((parseFloat(document.getElementById('height').value) / 100) ** 2);
+                data = {};
+                for (let age = 2; age <= 18; age++) {
+                    data[age] = standards.bmiForAge[age];
+                }
+                value = bmi;
+                label = '年龄（岁）';
+                valueLabel = 'BMI';
+            }
+
+            const ages = Object.keys(data).map(Number).sort((a, b) => a - b);
+            
+            const medianData = ages.map(age => data[age].median);
+            const p3Data = ages.map(age => data[age].p3);
+            const p97Data = ages.map(age => data[age].p97);
+            const minus1SD = ages.map(age => data[age].median - data[age].sd);
+            const plus1SD = ages.map(age => data[age].median + data[age].sd);
+            const minus2SD = ages.map(age => data[age].median - 2 * data[age].sd);
+            const plus2SD = ages.map(age => data[age].median + 2 * data[age].sd);
+
+            let pointX, pointY;
+            if (currentChart === 'height' || currentChart === 'weight') {
+                const ageInYears = parseFloat(document.getElementById('ageYears').value) + parseFloat(document.getElementById('ageMonths').value) / 12;
+                pointX = ageInYears;
+                pointY = value;
+            } else if (currentChart === 'weightForHeight') {
+                pointX = parseFloat(document.getElementById('height').value);
+                pointY = value;
+            } else if (currentChart === 'bmi') {
+                pointX = parseFloat(document.getElementById('ageYears').value) + parseFloat(document.getElementById('ageMonths').value) / 12;
+                pointY = value;
+            }
+
+            growthChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ages,
+                    datasets: [
+                        {
+                            label: 'P97',
+                            data: p97Data,
+                            borderColor: 'rgba(239, 68, 68, 0.3)',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            borderWidth: 2,
+                            fill: false,
+                            pointRadius: 0
+                        },
+                        {
+                            label: '+2SD',
+                            data: plus2SD,
+                            borderColor: 'rgba(239, 68, 68, 0.5)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            fill: false,
+                            pointRadius: 0
+                        },
+                        {
+                            label: '+1SD',
+                            data: plus1SD,
+                            borderColor: 'rgba(59, 130, 246, 0.5)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            fill: false,
+                            pointRadius: 0
+                        },
+                        {
+                            label: '中位数',
+                            data: medianData,
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            borderWidth: 3,
+                            fill: '-1',
+                            pointRadius: 0
+                        },
+                        {
+                            label: '-1SD',
+                            data: minus1SD,
+                            borderColor: 'rgba(59, 130, 246, 0.5)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            fill: false,
+                            pointRadius: 0
+                        },
+                        {
+                            label: '-2SD',
+                            data: minus2SD,
+                            borderColor: 'rgba(239, 68, 68, 0.5)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            fill: false,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'P3',
+                            data: p3Data,
+                            borderColor: 'rgba(239, 68, 68, 0.3)',
+                            borderWidth: 2,
+                            fill: false,
+                            pointRadius: 0
+                        },
+                        {
+                            label: '当前值',
+                            data: ages.map(age => age === Math.round(pointX) ? pointY : null),
+                            backgroundColor: '#764ba2',
+                            borderColor: '#764ba2',
+                            borderWidth: 3,
+                            pointRadius: 8,
+                            pointHoverRadius: 10,
+                            showLine: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                padding: 15,
+                                font: {
+                                    size: 11,
+                                    family: "'Microsoft YaHei', Arial, sans-serif"
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: currentChart === 'height' ? '年龄别身高生长曲线' :
+                                  currentChart === 'weight' ? '年龄别体重生长曲线' :
+                                  currentChart === 'weightForHeight' ? '身高别体重生长曲线' : 'BMI生长曲线',
+                            font: {
+                                size: 16,
+                                family: "'Microsoft YaHei', Arial, sans-serif",
+                                weight: 'bold'
+                            },
+                            padding: 20
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(1);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: label,
+                                font: {
+                                    size: 13,
+                                    family: "'Microsoft YaHei', Arial, sans-serif",
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11,
+                                    family: "'Microsoft YaHei', Arial, sans-serif"
+                                }
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: valueLabel,
+                                font: {
+                                    size: 13,
+                                    family: "'Microsoft YaHei', Arial, sans-serif",
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11,
+                                    family: "'Microsoft YaHei', Arial, sans-serif"
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 初始化示例计算
+        window.onload = function() {
+            calculateGrowth();
+        };
+    </script>
+</body>
+</html>
